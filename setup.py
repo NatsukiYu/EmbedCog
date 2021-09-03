@@ -5,7 +5,7 @@ with open('requirements.txt', 'r') as fp:
 
 setup(
     name='EmbedCog',
-    version='1.0.0',
+    version='1.1.0',
     license='MIT',
     description='Send an embed.',
     author='@natsuki__yu',
