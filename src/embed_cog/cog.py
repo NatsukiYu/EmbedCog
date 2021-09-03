@@ -1,11 +1,12 @@
 from asyncio import TimeoutError
 from logging import getLogger
-from typing import Optional, Union
+from typing import Optional
 
 import discord
-from discord import TextChannel, User, Message, Embed
+from discord import User, Message
 from discord.ext.commands import Cog, Bot, Context, command
-from discord_slash import SlashContext, ComponentContext
+
+from discord_slash import ComponentContext
 from discord_slash.model import ButtonStyle
 from discord_slash.utils.manage_components import create_button, create_actionrow, wait_for_component
 
@@ -17,8 +18,8 @@ logger = getLogger(__name__)
 class EmbedCog(Cog):
     """ユーザーの投稿をEmbedに変換するCog"""
 
-    EMOJI_OK = '⭕'
-    EMOJI_NG = '❌'
+    EMOJI_OK = '🙆'
+    EMOJI_NG = '🙅'
 
     ID_OK = 'button_ok'
     ID_NG = 'button_ng'
@@ -27,7 +28,7 @@ class EmbedCog(Cog):
         self.bot = bot
 
     @command('embed')
-    async def on_message(self, ctx: Union[Context, SlashContext], color: Optional[discord.Color] = None):
+    async def on_message(self, ctx: Context, color: Optional[discord.Color] = None):
         author: User = ctx.author
 
         await ctx.message.delete()
@@ -52,67 +53,34 @@ class EmbedCog(Cog):
             logger.debug('creating embed')
             embed = parse_embed(source_message.content, option)
         except NoBodyException:
-            await ctx.send('見出しに対応する内容がありません', hidden=True, delete_after=5)
+            await ctx.send('見出しに対応する内容がありません', delete_after=5)
             return
         except Exception as e:
-            await ctx.send('メッセージの変換に失敗しました', hidden=True, delete_after=5)
+            await ctx.send('メッセージの変換に失敗しました', delete_after=5)
             return
 
-        await self.confirm(ctx, embed)
+        embed_message = await ctx.send(embed=embed)
 
-    async def confirm(self, ctx: Context, embed: Embed):
-        channel: TextChannel = ctx.channel
-        author: User = ctx.author
-        source_message: Message = ctx.message.reference.resolved
-
-        embedded_message = await channel.send(embed=embed)
-        confirm_message = await embedded_message.reply('正しく表示されていますか？', delete_after=20)
-        await confirm_message.add_reaction(self.EMOJI_OK)
-        await confirm_message.add_reaction(self.EMOJI_NG)
-
-        def check(_reaction: discord.Reaction, _user: discord.User):
-            return _reaction.message == confirm_message and author == _user and _reaction.emoji in [self.EMOJI_OK, self.EMOJI_NG]
+        action_row = create_actionrow(
+            create_button(custom_id=self.ID_OK, label='OK', style=ButtonStyle.green, emoji=self.EMOJI_OK),
+            create_button(custom_id=self.ID_NG, label='NG', style=ButtonStyle.red, emoji=self.EMOJI_NG),
+        )
+        await ctx.send('正しく表示されていますか？', components=[action_row])
 
         try:
-            logger.debug('wait for reaction')
-            reaction, user = await self.bot.wait_for('reaction_add', check=check, timeout=20)
+            logger.debug('wait for button')
+            cpn: ComponentContext = await wait_for_component(self.bot, components=action_row)
 
-            if reaction.emoji == self.EMOJI_OK:
+            if cpn.custom_id == self.ID_OK:
                 logger.debug('reaction ok')
                 await source_message.delete()
-                await channel.send('完了しました', delete_after=5)
-            elif reaction.emoji == self.EMOJI_NG:
+                await cpn.edit_origin(content='完了しました', delete_after=5, components=None)  # todo delete_after seems not working
+            elif cpn.custom_id == self.ID_NG:
                 logger.debug('reaction ng')
-                await embedded_message.delete()
-                await channel.send('取り消しました', delete_after=5)
-            await confirm_message.delete()
+                await embed_message.delete()
+                await cpn.edit_origin(content='取り消しました', delete_after=5, components=None)
         except TimeoutError:
             logger.debug('reaction timeout')
-            await confirm_message.delete()
-
-    # async def confirm_slash(self, ctx: SlashContext, embed: Embed):
-    #     preview = await ctx.send(embed=embed, hidden=True)
-    #
-    #     action_row = create_actionrow(
-    #         create_button(custom_id=id_o, label='OK', emoji=emoji_o, style=ButtonStyle.green),
-    #         create_button(custom_id=id_x, label='NG', emoji=emoji_x, style=ButtonStyle.red),
-    #     )
-    #     await ctx.send('正しく表示されていますか？', components=[action_row], hidden=True)
-    #
-    #     try:
-    #         logger.debug('wait for reaction')
-    #         cpn: ComponentContext = await wait_for_component(self.bot, components=action_row)
-    #
-    #         if cpn.custom_id == id_o:
-    #             logger.debug('reaction ok')
-    #             await preview.delete()
-    #             await ctx.send(embed=embed)
-    #         elif cpn.custom_id == id_x:
-    #             logger.debug('reaction ng')
-    #             await preview.delete()
-    #     except TimeoutError:
-    #         logger.debug('reaction timeout')
-    #         # await preview.delete()
 
 
 def setup(bot):
