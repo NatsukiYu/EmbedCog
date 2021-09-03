@@ -1,0 +1,110 @@
+= EmbedCog
+夏木 悠 <@natsuki__yu>
+v1.0.0 2021-09-03
+
+:toc:
+:toc-title: 目次
+:icons: font
+:hardbreaks:
+
+:bot: icon:cogs[]
+:user: icon:user[]
+
+++++
+<link rel="stylesheet"  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/3.1.0/css/font-awesome.min.css">
+++++
+
+// ------------------------------------------ //
+
+ユーザーの投稿をEmbedに変換します．
+
+== 操作方法
+
+. {user} フォーマットに従ってメッセージを投稿
+. {user} メッセージに `!embed` と返信
+. {bot} Embedに変換されたメッセージを投稿
+. {bot} 確認のメッセージを投稿される
+. {user} リアクションで応答
+
+また， `!embed red` のように色を指定することも可能です．
+
+=== フォーマット
+
+[source]
+----
+= 見出し
+本文
+
+== ブロック
+本文
+
+=== インライン
+本文
+----
+
+== 必要な権限
+
+Send Messages:: Embedを送信するために使用します．
+Manage Messages:: 送信したEmbedのソースを削除するために使用します．
+
+[cols="<,<,<", frame=none, grid=none]
+|===
+a|.GENERAL PERMISSIONS
+* [ ] Administrator
+* [ ] View Audit Log
+* [ ] View Server Insights
+* [ ] Manage Server
+* [ ] Manage Roles
+* [ ] Manage Channels
+* [ ] Kick Members
+* [ ] Ban Members
+* [ ] Create Instant Invite
+* [ ] Change Nickname
+* [ ] Manage Nicknames
+* [ ] Manage Emojis
+* [ ] Manage Webhooks
+
+a|.TEXT PERMISSIONS
+* [ ] View Channels
+* [x] Send Messages
+* [ ] Send TTS Messages
+* [x] Manage Messages
+* [ ] Embed Links
+* [ ] Attach Files
+* [ ] Read Message History
+* [ ] Mention Everyone
+* [ ] Use External Emojis
+* [ ] Add Reactions
+* [ ] Use Slash Commands
+
+a|.VOICE PERMISSIONS
+* [ ] Connect
+* [ ] Speak
+* [ ] Video
+* [ ] Mute Members
+* [ ] Deafen Members
+* [ ] Move Members
+* [ ] Use Voice Activity
+* [ ] Priority Speaker
+|===
+
+== 導入方法
+
+:domain: github.com
+:account: NatsukiYu
+:project: EmbedCog
+
+次のいずれかのコマンドでインストールすることができます．
+
+* `pip install git+https://{domain}/{account}/{project}.git`
+* `pip install git+ssh://{domain}/{account}/{project}.git`
+
+以下のようにCogを読み込んでください．
+
+.example/main.py
+[source,python]
+----
+include::./example/main.py[]
+----
+<1> Cogを読み込む
+<2> Botを実行する
