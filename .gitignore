@@ -1,0 +1,13 @@
+# pycharm
+/.idea/
+
+# setuptools
+/build/
+/dist/
+*.egg-info
+
+# cache
+__pycache__
+
+# specified directory
+/excluded/
